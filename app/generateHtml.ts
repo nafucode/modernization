@@ -13,6 +13,8 @@ export interface SurveyData {
   entrances: "1" | "2"; pit: string; oh: string; shaftHeight: string; rising: string;
   floors: FloorStop[];
   photos: Record<number, PhotoItem>;
+  otherNote: string;
+  otherImages: PhotoEntry[];
 }
 
 const PHOTO_TITLES: Record<number, string> = {
@@ -327,6 +329,27 @@ export function generateSurveyHtml(data: SurveyData): string {
     <h2>On-Site Photos</h2>
   </div>
   ${photoSections}
+
+  <!-- Other Notes -->
+  <div class="section-head">
+    <div class="section-num" style="background:#475569">✎</div>
+    <h2>Other Notes</h2>
+  </div>
+  <div class="photo-item">
+    <div style="padding:16px">
+      ${data.otherNote
+        ? `<p style="font-size:14px;color:#1e293b;white-space:pre-wrap;line-height:1.7">${esc(data.otherNote)}</p>`
+        : `<p class="empty">No additional notes.</p>`}
+      ${data.otherImages.length > 0 ? `
+      <div class="thumbs" style="margin-top:16px">
+        ${data.otherImages.map((img, i) => `
+        <figure class="thumb">
+          <img src="${img.dataUrl}" alt="Attachment ${i+1}" loading="lazy" onclick="openLightbox(this.src)">
+          <figcaption>Attachment ${i + 1}</figcaption>
+        </figure>`).join("")}
+      </div>` : ""}
+    </div>
+  </div>
 
 </div>
 

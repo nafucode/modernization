@@ -41,6 +41,8 @@ interface FormState {
   rising: string;
   floors: FloorStop[];
   photos: Record<number, PhotoItem>;
+  otherNote: string;
+  otherImages: PhotoEntry[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -363,12 +365,97 @@ function PhotoCard({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+function OtherNotes({
+  note, images, onNoteChange, onImagesChange,
+}: {
+  note: string;
+  images: PhotoEntry[];
+  onNoteChange: (v: string) => void;
+  onImagesChange: (imgs: PhotoEntry[]) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
+
+  const addFiles = useCallback((files: FileList | null) => {
+    if (!files) return;
+    Promise.all(
+      Array.from(files)
+        .filter(f => f.type.startsWith("image/"))
+        .map(f => new Promise<PhotoEntry>(res => {
+          const r = new FileReader();
+          r.onload = e => res({ dataUrl: e.target?.result as string, name: f.name });
+          r.readAsDataURL(f);
+        }))
+    ).then(entries => onImagesChange([...images, ...entries]));
+  }, [images, onImagesChange]);
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
+        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 shrink-0">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </span>
+        <div>
+          <p className="font-semibold text-slate-800 text-sm">Other Notes</p>
+          <p className="text-xs text-slate-400">Additional remarks, photos, or observations</p>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-3">
+        <textarea
+          value={note}
+          onChange={e => onNoteChange(e.target.value)}
+          placeholder="Any additional observations, special conditions, or remarks for this site…"
+          rows={4}
+          className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-slate-400"
+        />
+
+        {images.length > 0 && (
+          <div className="grid grid-cols-3 gap-2">
+            {images.map((img, idx) => (
+              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={img.dataUrl} alt={img.name} className="w-full h-full object-cover" />
+                <button
+                  onClick={() => onImagesChange(images.filter((_, i) => i !== idx))}
+                  className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity"
+                >×</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <input ref={fileRef} type="file" accept="image/*" multiple onChange={e => addFiles(e.target.files)} />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          onDragOver={e => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={e => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
+          className={`photo-drop-zone w-full py-4 border-2 border-dashed rounded-xl flex items-center justify-center gap-2 transition-colors ${
+            dragging ? "border-blue-400 bg-blue-50" : "border-slate-300 bg-slate-50 hover:border-blue-400 active:border-blue-400"
+          }`}
+        >
+          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span className="text-sm text-slate-500 font-medium">Tap to attach photos</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function SurveyPage() {
   const [form, setForm] = useState<FormState>({
     projectName: "", size: "", cop: "", hopLop: "", firemanLockBox: "",
     copLength: "", copWidth: "", hopLength: "", hopWidth: "", fireboxLength: "", fireboxWidth: "",
     entrances: "1", pit: "", oh: "", shaftHeight: "", rising: "",
     floors: initFloors(), photos: initPhotos(),
+    otherNote: "", otherImages: [],
   });
   const [exporting, setExporting] = useState(false);
   const [done, setDone] = useState(false);
@@ -439,6 +526,10 @@ export default function SurveyPage() {
             p?.notes ? `   Notes: ${p.notes}` : "",
           ].filter(Boolean).join("\n");
         }),
+        "",
+        "[Other Notes]",
+        form.otherNote || "(none)",
+        `Attachments: ${form.otherImages.length} image(s)`,
       ];
 
       zip.file("survey.txt", lines.join("\n"));
@@ -451,6 +542,13 @@ export default function SurveyPage() {
         p.images.forEach((img, idx) => {
           const ext = img.dataUrl.match(/data:image\/(\w+);/)?.[1] ?? "jpg";
           folder?.file(`${idx + 1}.${ext}`, img.dataUrl.split(",")[1], { base64: true });
+        });
+      }
+      if (form.otherImages.length) {
+        const otherFolder = photoFolder?.folder("other_notes");
+        form.otherImages.forEach((img, idx) => {
+          const ext = img.dataUrl.match(/data:image\/(\w+);/)?.[1] ?? "jpg";
+          otherFolder?.file(`${idx + 1}.${ext}`, img.dataUrl.split(",")[1], { base64: true });
         });
       }
 
@@ -737,6 +835,14 @@ export default function SurveyPage() {
             ))}
           </div>
         </div>
+        {/* ── Other Notes ─────────────────────────────────────────────── */}
+        <OtherNotes
+          note={form.otherNote}
+          images={form.otherImages}
+          onNoteChange={(v) => setForm(p => ({ ...p, otherNote: v }))}
+          onImagesChange={(imgs) => setForm(p => ({ ...p, otherImages: imgs }))}
+        />
+
       </div>
 
       {/* Floating CTA */}
