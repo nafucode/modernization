@@ -3,8 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import JSZip from "jszip";
-import { ExOperationBox } from "./examples";
-import { generateSurveyPdf } from "./generatePdf";
+import { generateSurveyHtml } from "./generateHtml";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,7 +58,7 @@ const PHOTO_ITEMS = [
     title: "Machine Room Panorama",
     required: 1,
     instruction: "Stand at a corner of the machine room and photograph the main machine.",
-    exampleImgs: ["/examples/ex1a.jpg", "/examples/ex1b.jpg"],
+    exampleImgs: ["/examples/ex1.png"],
     ExSvg: null,
   },
   {
@@ -115,7 +114,7 @@ const PHOTO_ITEMS = [
     title: "Timing Belt Dimensions — 2 photos",
     required: 2,
     instruction: "Door closed. Place a tape measure as shown. Photograph the highlighted measurement area.",
-    exampleImgs: ["/examples/ex8a.jpg", "/examples/ex8b.jpg"],
+    exampleImgs: ["/examples/ex8a.jpg", "/examples/ex8b.png"],
     ExSvg: null,
   },
   {
@@ -123,7 +122,7 @@ const PHOTO_ITEMS = [
     title: "Door Motor — 2 photos",
     required: 2,
     instruction: "① Motor nameplate. ② Motor installation position on the door operator.",
-    exampleImgs: ["/examples/ex9.jpg"],
+    exampleImgs: ["/examples/ex9a.png", "/examples/ex9b.png"],
     ExSvg: null,
   },
   {
@@ -131,7 +130,7 @@ const PHOTO_ITEMS = [
     title: "Door Controller Wiring — 2 photos",
     required: 2,
     instruction: "① Door operator wiring photo. ② The door-operator section of the electrical schematic inside the control cabinet.",
-    exampleImgs: ["/examples/ex10.jpg"],
+    exampleImgs: ["/examples/ex10a.png", "/examples/ex10b.jpg"],
     ExSvg: null,
   },
   {
@@ -139,8 +138,8 @@ const PHOTO_ITEMS = [
     title: "Operation Box — 2 photos",
     required: 2,
     instruction: "① Front face of the COP. ② Its installation position inside the car.",
-    exampleImgs: [],
-    ExSvg: ExOperationBox,
+    exampleImgs: ["/examples/ex11a.jpg", "/examples/ex11b.jpg"],
+    ExSvg: null,
   },
   {
     id: 12,
@@ -289,11 +288,7 @@ function PhotoCard({
                 </div>
               ))}
             </div>
-          ) : item.ExSvg ? (
-            <div className="rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ maxHeight: 180 }}>
-              <item.ExSvg />
-            </div>
-          ) : null}
+              ) : null}
         </div>
       )}
 
@@ -456,8 +451,8 @@ export default function SurveyPage() {
         });
       }
 
-      const pdfBlob = await generateSurveyPdf(form);
-      zip.file("survey_report.pdf", pdfBlob);
+      const html = generateSurveyHtml(form);
+      zip.file("survey_report.html", html);
 
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
