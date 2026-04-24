@@ -626,8 +626,9 @@ export default function SurveyPage() {
           <div>
             <label className="text-sm font-semibold text-slate-700 block mb-2">
               Floor Stops
+              <span className="ml-1.5 text-xs font-normal text-slate-400">(physical floors in the building)</span>
               {activeFloors.length > 0 && (
-                <span className="ml-2 text-xs font-normal text-slate-400">{activeFloors.length} selected</span>
+                <span className="ml-2 text-xs font-normal text-slate-400">&middot; {activeFloors.length} selected</span>
               )}
             </label>
             <div className="grid grid-cols-5 gap-2 mb-4">
@@ -645,6 +646,24 @@ export default function SurveyPage() {
                   {f.floor}
                 </button>
               ))}
+              {/* Add custom floor button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const name = prompt("Enter floor name (e.g. 36F, M1, RF):");
+                  if (!name?.trim()) return;
+                  const label = name.trim();
+                  if (form.floors.some(f => f.floor === label)) return;
+                  setForm(prev => ({
+                    ...prev,
+                    floors: [...prev.floors, { floor: label, active: true, height: "", frontName: "", backName: "" }],
+                  }));
+                }}
+                className="h-10 rounded-xl text-lg font-bold border-2 border-dashed border-slate-300 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
+                title="Add custom floor"
+              >
+                +
+              </button>
             </div>
 
             {activeFloors.length > 0 && (
