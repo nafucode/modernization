@@ -667,7 +667,10 @@ export default function SurveyPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-slate-500 block mb-1">Front door label</label>
+                          <label className="text-xs text-slate-500 block mb-1">
+                            Front door label
+                            <span className="ml-1 text-slate-400 font-normal">· Display as on COP</span>
+                          </label>
                           <input
                             type="text"
                             value={f.frontName}
