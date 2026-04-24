@@ -1,12 +1,9 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import JSZip from "jszip";
-import {
-  ExMachineRoom, ExControlCabinet, ExNameplate, ExBrakeNameplate,
-  ExEncoder, ExDoorOperator, ExTimingBelt, ExMotorModel,
-  ExControllerWiring, ExOperationBox, ExHallDoor,
-} from "./examples";
+import { ExOperationBox } from "./examples";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -61,84 +58,96 @@ const PHOTO_ITEMS = [
     title: "Machine Room Panorama",
     required: 1,
     instruction: "Stand at a corner of the machine room and photograph the main machine.",
-    Example: ExMachineRoom,
+    exampleImgs: ["/examples/ex1a.jpg", "/examples/ex1b.jpg"],
+    ExSvg: null,
   },
   {
     id: 2,
     title: "Control Cabinet",
     required: 1,
     instruction: "Open the cabinet door. Stand ~1 m away. Clearly show the original installation.",
-    Example: ExControlCabinet,
+    exampleImgs: ["/examples/ex2.jpg"],
+    ExSvg: null,
   },
   {
     id: 3,
     title: "Control Cabinet Nameplate",
     required: 1,
     instruction: "Wipe off dust. Shoot from ~20 cm. Speed and load parameters must be legible.",
-    Example: ExNameplate,
+    exampleImgs: ["/examples/ex3.jpg"],
+    ExSvg: null,
   },
   {
     id: 4,
     title: "Main Machine Nameplate",
     required: 1,
     instruction: "Wipe off dust. Shoot from ~20 cm. All machine parameters must be legible.",
-    Example: ExNameplate,
+    exampleImgs: ["/examples/ex4.jpg"],
+    ExSvg: null,
   },
   {
     id: 5,
     title: "Brake Nameplate",
     required: 1,
     instruction: "Shoot from ~20 cm — show brake voltage and power. If no nameplate, photograph the multimeter reading when the brake opens.",
-    Example: ExBrakeNameplate,
+    exampleImgs: ["/examples/ex5.jpg"],
+    ExSvg: null,
   },
   {
     id: 6,
     title: "Encoder — 2 photos",
     required: 2,
     instruction: "① Encoder nameplate close-up. ② Encoder mounted on the main machine.",
-    Example: ExEncoder,
+    exampleImgs: ["/examples/ex6a.jpg", "/examples/ex6b.jpg"],
+    ExSvg: null,
   },
   {
     id: 7,
     title: "Door Operator — Front View",
     required: 1,
     instruction: "Door closed. Shoot from the hall side, showing the full front of the door operator.",
-    Example: ExDoorOperator,
+    exampleImgs: ["/examples/ex7.jpg"],
+    ExSvg: null,
   },
   {
     id: 8,
     title: "Timing Belt Dimensions — 2 photos",
     required: 2,
     instruction: "Door closed. Place a tape measure as shown. Photograph the highlighted measurement area.",
-    Example: ExTimingBelt,
+    exampleImgs: ["/examples/ex8a.jpg", "/examples/ex8b.jpg"],
+    ExSvg: null,
   },
   {
     id: 9,
     title: "Door Motor — 2 photos",
     required: 2,
     instruction: "① Motor nameplate. ② Motor installation position on the door operator.",
-    Example: ExMotorModel,
+    exampleImgs: ["/examples/ex9.jpg"],
+    ExSvg: null,
   },
   {
     id: 10,
     title: "Door Controller Wiring — 2 photos",
     required: 2,
     instruction: "① Door operator wiring photo. ② The door-operator section of the electrical schematic inside the control cabinet.",
-    Example: ExControllerWiring,
+    exampleImgs: ["/examples/ex10.jpg"],
+    ExSvg: null,
   },
   {
     id: 11,
     title: "Operation Box — 2 photos",
     required: 2,
     instruction: "① Front face of the COP. ② Its installation position inside the car.",
-    Example: ExOperationBox,
+    exampleImgs: [],
+    ExSvg: ExOperationBox,
   },
   {
     id: 12,
     title: "Hall Door — 2 photos",
     required: 2,
     instruction: "① Front of the hall door. ② Hall call button position.",
-    Example: ExHallDoor,
+    exampleImgs: ["/examples/ex12.jpg"],
+    ExSvg: null,
   },
 ];
 
@@ -263,12 +272,27 @@ function PhotoCard({
         </button>
       </div>
 
-      {/* SVG example */}
+      {/* Example panel */}
       {showExample && (
         <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
-          <div className="rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ maxHeight: 180 }}>
-            <item.Example />
-          </div>
+          {item.exampleImgs.length > 0 ? (
+            <div className={`grid gap-2 ${item.exampleImgs.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+              {item.exampleImgs.map((src, i) => (
+                <div key={i} className="relative rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ aspectRatio: "4/3" }}>
+                  <Image src={src} alt={`Example ${i + 1}`} fill sizes="(max-width: 640px) 50vw, 300px" className="object-cover" />
+                  {item.exampleImgs.length > 1 && (
+                    <div className="absolute top-1 left-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+                      Photo {i + 1}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : item.ExSvg ? (
+            <div className="rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ maxHeight: 180 }}>
+              <item.ExSvg />
+            </div>
+          ) : null}
         </div>
       )}
 
