@@ -31,8 +31,9 @@ interface FormState {
   cop: string;
   hopLop: string;
   firemanLockBox: string;
-  mountingBoxLength: string;
-  mountingBoxWidth: string;
+  copLength: string; copWidth: string;
+  hopLength: string; hopWidth: string;
+  fireboxLength: string; fireboxWidth: string;
   entrances: "1" | "2";
   pit: string;
   oh: string;
@@ -365,7 +366,7 @@ function PhotoCard({
 export default function SurveyPage() {
   const [form, setForm] = useState<FormState>({
     projectName: "", size: "", cop: "", hopLop: "", firemanLockBox: "",
-    mountingBoxLength: "", mountingBoxWidth: "",
+    copLength: "", copWidth: "", hopLength: "", hopWidth: "", fireboxLength: "", fireboxWidth: "",
     entrances: "1", pit: "", oh: "", shaftHeight: "", rising: "",
     floors: initFloors(), photos: initPhotos(),
   });
@@ -411,7 +412,9 @@ export default function SurveyPage() {
         `COP: ${form.cop}`,
         `HOP/LOP: ${form.hopLop}`,
         `Fireman Lock Box: ${form.firemanLockBox}`,
-        `Mounting Box: ${form.mountingBoxLength} × ${form.mountingBoxWidth} mm`,
+        `COP box: ${form.copLength || "—"} × ${form.copWidth || "—"} mm`,
+        `HOP/LOP box: ${form.hopLength || "—"} × ${form.hopWidth || "—"} mm`,
+        `Fireman Lock Box size: ${form.fireboxLength || "—"} × ${form.fireboxWidth || "—"} mm`,
         "",
         "[Shaft & Floor Configuration]",
         `Entrances: ${form.entrances === "1" ? "Single" : "Double"}`,
@@ -531,9 +534,59 @@ export default function SurveyPage() {
               <Field label="HOP / LOP" value={form.hopLop} onChange={(v) => set("hopLop", v)} placeholder="Model" />
               <Field label="Fireman Lock Box" value={form.firemanLockBox} onChange={(v) => set("firemanLockBox", v)} placeholder="Yes / No" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Mounting Box Length" value={form.mountingBoxLength} onChange={(v) => set("mountingBoxLength", v)} placeholder="0" type="number" unit="mm" />
-              <Field label="Mounting Box Width" value={form.mountingBoxWidth} onChange={(v) => set("mountingBoxWidth", v)} placeholder="0" type="number" unit="mm" />
+
+            {/* Mounting box dimensions — 3-component grid */}
+            <div>
+              <p className="text-sm font-semibold text-slate-700 mb-2">
+                Mounting Box Dimensions <span className="text-xs font-normal text-slate-400">mm</span>
+              </p>
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
+                {/* Header */}
+                <div className="grid grid-cols-4 bg-slate-50 border-b border-slate-200">
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-400" />
+                  {["COP", "HOP / LOP", "Fireman Box"].map((h) => (
+                    <div key={h} className="px-3 py-2 text-xs font-semibold text-slate-600 text-center">{h}</div>
+                  ))}
+                </div>
+                {/* Length row */}
+                <div className="grid grid-cols-4 border-b border-slate-100 bg-white">
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-500 flex items-center">Length</div>
+                  {[
+                    ["copLength", form.copLength] as const,
+                    ["hopLength", form.hopLength] as const,
+                    ["fireboxLength", form.fireboxLength] as const,
+                  ].map(([key, val]) => (
+                    <div key={key} className="px-2 py-1.5">
+                      <input
+                        type="number"
+                        value={val}
+                        onChange={(e) => set(key, e.target.value)}
+                        placeholder="—"
+                        className="w-full h-9 px-2 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+                {/* Width row */}
+                <div className="grid grid-cols-4 bg-white">
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-500 flex items-center">Width</div>
+                  {[
+                    ["copWidth", form.copWidth] as const,
+                    ["hopWidth", form.hopWidth] as const,
+                    ["fireboxWidth", form.fireboxWidth] as const,
+                  ].map(([key, val]) => (
+                    <div key={key} className="px-2 py-1.5">
+                      <input
+                        type="number"
+                        value={val}
+                        onChange={(e) => set(key, e.target.value)}
+                        placeholder="—"
+                        className="w-full h-9 px-2 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </SectionCard>

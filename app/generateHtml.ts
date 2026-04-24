@@ -6,7 +6,10 @@ interface PhotoItem  { images: PhotoEntry[]; notes: string; }
 
 export interface SurveyData {
   projectName: string; size: string; cop: string; hopLop: string;
-  firemanLockBox: string; mountingBoxLength: string; mountingBoxWidth: string;
+  firemanLockBox: string;
+  copLength: string; copWidth: string;
+  hopLength: string; hopWidth: string;
+  fireboxLength: string; fireboxWidth: string;
   entrances: "1" | "2"; pit: string; oh: string; shaftHeight: string; rising: string;
   floors: FloorStop[];
   photos: Record<number, PhotoItem>;
@@ -274,7 +277,31 @@ export function generateSurveyHtml(data: SurveyData): string {
     ${kv("COP", data.cop)}
     ${kv("HOP / LOP", data.hopLop)}
     ${kv("Fireman Lock Box", data.firemanLockBox)}
-    ${kv("Mounting Box", `${data.mountingBoxLength || "—"} × ${data.mountingBoxWidth || "—"} mm`)}
+  </table>
+  <table class="kv" style="margin-top:8px">
+    <thead>
+      <tr style="background:#eff6ff">
+        <th style="color:#2563eb">Mounting Box (mm)</th>
+        <th style="color:#2563eb;font-weight:700;text-align:center">COP</th>
+        <th style="color:#2563eb;font-weight:700;text-align:center">HOP / LOP</th>
+        <th style="color:#2563eb;font-weight:700;text-align:center">Fireman Box</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>Length</th>
+        <td style="text-align:center">${esc(data.copLength || "—")}</td>
+        <td style="text-align:center">${esc(data.hopLength || "—")}</td>
+        <td style="text-align:center">${esc(data.fireboxLength || "—")}</td>
+      </tr>
+      <tr style="background:#f8fafc">
+        <th>Width</th>
+        <td style="text-align:center">${esc(data.copWidth || "—")}</td>
+        <td style="text-align:center">${esc(data.hopWidth || "—")}</td>
+        <td style="text-align:center">${esc(data.fireboxWidth || "—")}</td>
+      </tr>
+    </tbody>
+  <br style="display:none">
   </table>
 
   <!-- Section 2: Shaft & Floor -->
