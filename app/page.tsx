@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import JSZip from "jszip";
 import { ExOperationBox } from "./examples";
+import { generateSurveyPdf } from "./generatePdf";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -454,6 +455,9 @@ export default function SurveyPage() {
           folder?.file(`${idx + 1}.${ext}`, img.dataUrl.split(",")[1], { base64: true });
         });
       }
+
+      const pdfBlob = await generateSurveyPdf(form);
+      zip.file("survey_report.pdf", pdfBlob);
 
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
