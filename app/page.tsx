@@ -459,6 +459,10 @@ export default function SurveyPage() {
   });
   const [exporting, setExporting] = useState(false);
   const [done, setDone] = useState(false);
+  const [lastZip, setLastZip] = useState<{ base64: string; filename: string } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState<"idle" | "sent" | "error">("idle");
+  const [sendError, setSendError] = useState<string>("");
 
   const set = (key: keyof Omit<FormState, "floors" | "photos">, v: string) =>
     setForm((p) => ({ ...p, [key]: v }));
@@ -555,16 +559,48 @@ export default function SurveyPage() {
       const html = generateSurveyHtml(form);
       zip.file("survey_report.html", html);
 
+      const filename = `survey_${form.projectName || "untitled"}_${new Date().toISOString().slice(0, 10)}.zip`;
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `survey_${form.projectName || "untitled"}_${new Date().toISOString().slice(0, 10)}.zip`;
+      a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
+
+      const base64 = await zip.generateAsync({ type: "base64" });
+      setLastZip({ base64, filename });
+      setSendStatus("idle");
+      setSendError("");
       setDone(true);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!lastZip) return;
+    setSending(true);
+    setSendStatus("idle");
+    setSendError("");
+    try {
+      const res = await fetch("/api/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: lastZip.filename,
+          base64: lastZip.base64,
+          projectName: form.projectName,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Send failed");
+      setSendStatus("sent");
+    } catch (e) {
+      setSendStatus("error");
+      setSendError(e instanceof Error ? e.message : "Send failed");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -578,14 +614,49 @@ export default function SurveyPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-800 mb-1">Export complete</h1>
-          <p className="text-slate-500 max-w-xs">Your survey data has been packaged. Please send the file to your project manager.</p>
+          <p className="text-slate-500 max-w-xs">Your survey package has been downloaded. You can also send it directly to info@xinfuji.com.</p>
         </div>
-        <button
-          onClick={() => setDone(false)}
-          className="px-6 py-3 rounded-2xl bg-blue-600 text-white font-semibold text-base active:bg-blue-700"
-        >
-          Back to form
-        </button>
+
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          <button
+            onClick={handleSend}
+            disabled={sending || !lastZip || sendStatus === "sent"}
+            className="px-6 py-3 rounded-2xl bg-blue-600 text-white font-semibold text-base active:bg-blue-700 disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {sending ? (
+              <>
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Sending…
+              </>
+            ) : sendStatus === "sent" ? (
+              <>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Sent to info@xinfuji.com
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Send to info@xinfuji.com
+              </>
+            )}
+          </button>
+          {sendStatus === "error" && (
+            <p className="text-sm text-red-600">{sendError}</p>
+          )}
+          <button
+            onClick={() => setDone(false)}
+            className="px-6 py-3 rounded-2xl bg-white text-slate-700 font-semibold text-base border border-slate-200 active:bg-slate-50"
+          >
+            Back to form
+          </button>
+        </div>
       </div>
     );
   }
