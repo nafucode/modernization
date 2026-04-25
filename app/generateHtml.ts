@@ -5,8 +5,10 @@ interface PhotoEntry { dataUrl: string; name: string; }
 interface PhotoItem  { images: PhotoEntry[]; notes: string; }
 
 export interface SurveyData {
-  projectName: string; size: string; cop: string; hopLop: string;
-  firemanLockBox: string;
+  projectName: string;
+  siteAddress: string; lat: string; lng: string;
+  brand: string; brandOther: string;
+  yearInstalled: string; powerSupply: string;
   copLength: string; copWidth: string;
   hopLength: string; hopWidth: string;
   fireboxLength: string; fireboxWidth: string;
@@ -275,10 +277,14 @@ export function generateSurveyHtml(data: SurveyData): string {
   </div>
   <table class="kv">
     ${kv("Project Name", data.projectName)}
-    ${kv("Size", data.size)}
-    ${kv("COP", data.cop)}
-    ${kv("HOP / LOP", data.hopLop)}
-    ${kv("Fireman Lock Box", data.firemanLockBox)}
+    ${kv("Site Address", data.siteAddress)}
+    ${data.lat && data.lng
+      ? `<tr><th>GPS</th><td><a href="https://www.google.com/maps?q=${esc(data.lat)},${esc(data.lng)}" target="_blank" style="color:#2563eb">${esc(data.lat)}, ${esc(data.lng)}</a></td></tr>`
+      : ""}
+    ${kv("Existing Brand", data.brand === "Other" ? data.brandOther : data.brand)}
+    ${kv("Year Installed", data.yearInstalled)}
+    ${kv("Power Supply", data.powerSupply)}
+    ${kv("Survey Date", date)}
   </table>
   <table class="kv" style="margin-top:8px">
     <thead>

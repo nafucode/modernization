@@ -27,10 +27,13 @@ interface PhotoItem {
 
 interface FormState {
   projectName: string;
-  size: string;
-  cop: string;
-  hopLop: string;
-  firemanLockBox: string;
+  siteAddress: string;
+  lat: string;
+  lng: string;
+  brand: string;
+  brandOther: string;
+  yearInstalled: string;
+  powerSupply: string;
   copLength: string; copWidth: string;
   hopLength: string; hopWidth: string;
   fireboxLength: string; fireboxWidth: string;
@@ -44,6 +47,13 @@ interface FormState {
   otherNote: string;
   otherImages: PhotoEntry[];
 }
+
+const ELEVATOR_BRANDS = [
+  "Otis", "KONE", "Schindler", "Mitsubishi", "Hitachi", "Toshiba",
+  "Fujitec", "TK Elevator", "Hyundai",
+  "EITA-Schneider", "Xizi-Otis", "Shanghai Mitsubishi", "Yungtay", "Canny",
+  "Other",
+];
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -451,12 +461,15 @@ function OtherNotes({
 
 export default function SurveyPage() {
   const [form, setForm] = useState<FormState>({
-    projectName: "", size: "", cop: "", hopLop: "", firemanLockBox: "",
+    projectName: "",
+    siteAddress: "", lat: "", lng: "",
+    brand: "", brandOther: "", yearInstalled: "", powerSupply: "",
     copLength: "", copWidth: "", hopLength: "", hopWidth: "", fireboxLength: "", fireboxWidth: "",
     entrances: "1", pit: "", oh: "", shaftHeight: "", rising: "",
     floors: initFloors(), photos: initPhotos(),
     otherNote: "", otherImages: [],
   });
+  const [locating, setLocating] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [done, setDone] = useState(false);
   const [lastZip, setLastZip] = useState<{ base64: string; filename: string } | null>(null);
@@ -499,10 +512,12 @@ export default function SurveyPage() {
         "",
         "[Project Information]",
         `Project Name: ${form.projectName}`,
-        `Size: ${form.size}`,
-        `COP: ${form.cop}`,
-        `HOP/LOP: ${form.hopLop}`,
-        `Fireman Lock Box: ${form.firemanLockBox}`,
+        `Site Address: ${form.siteAddress}`,
+        form.lat && form.lng ? `GPS: ${form.lat}, ${form.lng} (https://www.google.com/maps?q=${form.lat},${form.lng})` : "",
+        `Existing Brand: ${form.brand === "Other" ? form.brandOther : form.brand}`,
+        `Year Installed: ${form.yearInstalled}`,
+        `Power Supply: ${form.powerSupply}`,
+        `Survey Date: ${new Date().toISOString().slice(0, 10)}`,
         `COP box: ${form.copLength || "—"} × ${form.copWidth || "—"} mm`,
         `HOP/LOP box: ${form.hopLength || "—"} × ${form.hopWidth || "—"} mm`,
         `Fireman Lock Box size: ${form.fireboxLength || "—"} × ${form.fireboxWidth || "—"} mm`,
@@ -695,13 +710,86 @@ export default function SurveyPage() {
         <SectionCard number="1" title="Project Information">
           <div className="grid grid-cols-1 gap-4">
             <Field label="Project Name" value={form.projectName} onChange={(v) => set("projectName", v)} placeholder="Enter project name" />
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Size" value={form.size} onChange={(v) => set("size", v)} placeholder="e.g. 1000 kg" />
-              <Field label="COP" value={form.cop} onChange={(v) => set("cop", v)} placeholder="Model" />
+
+            {/* Site address + geolocation */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-slate-700">Site Address</label>
+              <textarea
+                value={form.siteAddress}
+                onChange={(e) => set("siteAddress", e.target.value)}
+                placeholder="Building name, street, city"
+                rows={2}
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-base text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <div className="flex items-center gap-2 mt-1">
+                <button
+                  type="button"
+                  disabled={locating}
+                  onClick={() => {
+                    if (!navigator.geolocation) {
+                      alert("Geolocation not supported on this device");
+                      return;
+                    }
+                    setLocating(true);
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        setForm((p) => ({
+                          ...p,
+                          lat: pos.coords.latitude.toFixed(6),
+                          lng: pos.coords.longitude.toFixed(6),
+                        }));
+                        setLocating(false);
+                      },
+                      (err) => { alert("Location error: " + err.message); setLocating(false); },
+                      { enableHighAccuracy: true, timeout: 10000 }
+                    );
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-semibold disabled:opacity-60"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {locating ? "Locating…" : "Use current location"}
+                </button>
+                {form.lat && form.lng && (
+                  <a
+                    href={`https://www.google.com/maps?q=${form.lat},${form.lng}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 underline"
+                  >
+                    {form.lat}, {form.lng}
+                  </a>
+                )}
+              </div>
             </div>
+
+            {/* Brand dropdown + custom */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-slate-700">Existing Brand</label>
+              <select
+                value={form.brand}
+                onChange={(e) => set("brand", e.target.value)}
+                className="h-11 px-3 rounded-xl border border-slate-200 bg-white text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select brand…</option>
+                {ELEVATOR_BRANDS.map((b) => <option key={b} value={b}>{b}</option>)}
+              </select>
+              {form.brand === "Other" && (
+                <input
+                  type="text"
+                  value={form.brandOther}
+                  onChange={(e) => set("brandOther", e.target.value)}
+                  placeholder="Specify brand"
+                  className="mt-1 h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
-              <Field label="HOP / LOP" value={form.hopLop} onChange={(v) => set("hopLop", v)} placeholder="Model" />
-              <Field label="Fireman Lock Box" value={form.firemanLockBox} onChange={(v) => set("firemanLockBox", v)} placeholder="Yes / No" />
+              <Field label="Year Installed" value={form.yearInstalled} onChange={(v) => set("yearInstalled", v)} placeholder="e.g. 2008" type="number" />
+              <Field label="Power Supply" value={form.powerSupply} onChange={(v) => set("powerSupply", v)} placeholder="380V 3-phase 50Hz" />
             </div>
 
             {/* Mounting box dimensions — 3-component grid */}
