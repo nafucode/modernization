@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 import JSZip from "jszip";
 import { generateSurveyHtml } from "./generateHtml";
@@ -470,6 +470,59 @@ export default function SurveyPage() {
     otherNote: "", otherImages: [],
   });
   const [locating, setLocating] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
+
+  // Load draft once on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("survey-draft");
+      if (raw) {
+        const saved = JSON.parse(raw);
+        setForm((prev) => ({ ...prev, ...saved }));
+        setDraftLoaded(true);
+      }
+    } catch {}
+  }, []);
+
+  // Auto-save draft on changes (debounced)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem("survey-draft", JSON.stringify(form));
+        setDraftSavedAt(new Date());
+      } catch {
+        // Storage quota exceeded — try saving without photo dataUrls
+        try {
+          const slim = {
+            ...form,
+            photos: Object.fromEntries(
+              Object.entries(form.photos).map(([k, v]) => [k, { ...v, images: [] }])
+            ),
+            otherImages: [],
+          };
+          localStorage.setItem("survey-draft", JSON.stringify(slim));
+          setDraftSavedAt(new Date());
+        } catch {}
+      }
+    }, 600);
+    return () => clearTimeout(t);
+  }, [form]);
+
+  const clearDraft = () => {
+    if (!confirm("Clear saved draft and start over? · 清除草稿并重置？")) return;
+    localStorage.removeItem("survey-draft");
+    setForm({
+      projectName: "",
+      siteAddress: "", lat: "", lng: "",
+      brand: "", brandOther: "", yearInstalled: "", powerSupply: "",
+      copLength: "", copWidth: "", hopLength: "", hopWidth: "", fireboxLength: "", fireboxWidth: "",
+      entrances: "1", pit: "", oh: "", shaftHeight: "", rising: "",
+      floors: initFloors(), photos: initPhotos(),
+      otherNote: "", otherImages: [],
+    });
+    setDraftLoaded(false);
+  };
   const [exporting, setExporting] = useState(false);
   const [done, setDone] = useState(false);
   const [lastZip, setLastZip] = useState<{ base64: string; filename: string } | null>(null);
@@ -681,9 +734,20 @@ export default function SurveyPage() {
       {/* Sticky header */}
       <div className="sticky top-0 z-10 bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          <div>
+          <div className="min-w-0 flex-1">
             <h1 className="text-base font-bold text-slate-800 leading-tight">Electrical Survey Form</h1>
-            <p className="text-xs text-slate-400">电气勘测信息表</p>
+            <p className="text-xs text-slate-400 flex items-center gap-2">
+              电气勘测信息表
+              {draftSavedAt && (
+                <span className="inline-flex items-center gap-1 text-green-600">
+                  · <span>Draft saved {draftSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                  <button onClick={clearDraft} className="text-slate-400 hover:text-red-500 underline ml-1" type="button">clear</button>
+                </span>
+              )}
+              {draftLoaded && !draftSavedAt && (
+                <span className="text-blue-600">· Draft restored</span>
+              )}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-slate-500 whitespace-nowrap">

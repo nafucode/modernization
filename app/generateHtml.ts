@@ -19,27 +19,27 @@ export interface SurveyData {
   otherImages: PhotoEntry[];
 }
 
-const PHOTO_TITLES: Record<number, string> = {
-  1:  "Machine Room Panorama",
-  2:  "Control Cabinet",
-  3:  "Control Cabinet Nameplate",
-  4:  "Main Machine Nameplate",
-  5:  "Brake Nameplate",
-  6:  "Encoder — 2 photos",
-  7:  "Door Operator — Front View",
-  8:  "Timing Belt Dimensions — 2 photos",
-  9:  "Door Motor — 2 photos",
-  10: "Door Controller Wiring — 2 photos",
-  11: "Operation Box — 2 photos",
-  12: "Hall Door — 2 photos",
+const PHOTO_TITLES: Record<number, [string, string]> = {
+  1:  ["Machine Room Panorama",          "机房全景"],
+  2:  ["Control Cabinet",                "控制柜"],
+  3:  ["Control Cabinet Nameplate",      "控制柜铭牌"],
+  4:  ["Main Machine Nameplate",         "主机铭牌"],
+  5:  ["Brake Nameplate",                "抱闸铭牌"],
+  6:  ["Encoder — 2 photos",             "编码器（2张）"],
+  7:  ["Door Operator — Front View",     "门机正面"],
+  8:  ["Timing Belt Dimensions — 2 photos", "同步带尺寸（2张）"],
+  9:  ["Door Motor — 2 photos",          "门机电机（2张）"],
+  10: ["Door Controller Wiring — 2 photos", "门机控制器接线（2张）"],
+  11: ["Operation Box — 2 photos",       "操纵箱（2张）"],
+  12: ["Hall Door — 2 photos",           "层门（2张）"],
 };
 
 function esc(s: string) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-function kv(label: string, value: string) {
-  return `<tr><th>${esc(label)}</th><td>${esc(value || "—")}</td></tr>`;
+function kv(label: string, zh: string, value: string) {
+  return `<tr><th>${esc(label)}<span class="zh">${esc(zh)}</span></th><td>${esc(value || "—")}</td></tr>`;
 }
 
 export function generateSurveyHtml(data: SurveyData): string {
@@ -61,18 +61,19 @@ export function generateSurveyHtml(data: SurveyData): string {
       </figure>`).join("");
 
     const badge = count > 0
-      ? `<span class="badge done">${count} photo${count > 1 ? "s" : ""}</span>`
-      : `<span class="badge missing">No photos</span>`;
+      ? `<span class="badge done">${count} photo${count > 1 ? "s" : ""} · ${count}张</span>`
+      : `<span class="badge missing">No photos · 暂无</span>`;
 
+    const [titleEn, titleZh] = PHOTO_TITLES[id];
     photoSections += `
     <section class="photo-item">
       <div class="photo-header">
         <div class="num">${id}</div>
-        <h3>${esc(PHOTO_TITLES[id])}</h3>
+        <h3>${esc(titleEn)}<span class="zh-inline">${esc(titleZh)}</span></h3>
         ${badge}
       </div>
-      ${count > 0 ? `<div class="thumbs">${thumbs}</div>` : '<p class="empty">No photos uploaded.</p>'}
-      ${notes ? `<p class="notes"><strong>Notes:</strong> ${esc(notes)}</p>` : ""}
+      ${count > 0 ? `<div class="thumbs">${thumbs}</div>` : '<p class="empty">No photos uploaded · 未上传照片</p>'}
+      ${notes ? `<p class="notes"><strong>Notes 备注：</strong> ${esc(notes)}</p>` : ""}
     </section>`;
   }
 
@@ -85,11 +86,11 @@ export function generateSurveyHtml(data: SurveyData): string {
         <td>${esc(f.frontName || "—")}</td>
         ${data.entrances === "2" ? `<td>${esc(f.backName || "—")}</td>` : ""}
       </tr>`).join("")
-    : `<tr><td colspan="${data.entrances === "2" ? 4 : 3}" class="empty-row">No floor stops configured.</td></tr>`;
+    : `<tr><td colspan="${data.entrances === "2" ? 4 : 3}" class="empty-row">No floor stops configured · 未配置楼层</td></tr>`;
 
   const floorHeader = data.entrances === "2"
-    ? "<tr><th>Floor</th><th>Height</th><th>Front Door</th><th>Rear Door</th></tr>"
-    : "<tr><th>Floor</th><th>Height</th><th>Front Door</th></tr>";
+    ? `<tr><th>Floor<span class="zh">楼层</span></th><th>Height<span class="zh">高度</span></th><th>Front Door<span class="zh">前门</span></th><th>Rear Door<span class="zh">后门</span></th></tr>`
+    : `<tr><th>Floor<span class="zh">楼层</span></th><th>Height<span class="zh">高度</span></th><th>Front Door<span class="zh">前门</span></th></tr>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -137,6 +138,9 @@ export function generateSurveyHtml(data: SurveyData): string {
     font-weight: 800; font-size: 14px; flex-shrink: 0;
   }
   .section-head h2 { font-size: 18px; font-weight: 700; color: #1e293b; }
+  .section-head h2 .zh-inline { font-size: 13px; font-weight: 500; color: #64748b; margin-left: 8px; }
+  .zh { display: block; font-size: 11px; font-weight: 400; color: #94a3b8; margin-top: 2px; }
+  .zh-inline { font-size: 12px; font-weight: 400; color: #94a3b8; margin-left: 6px; }
 
   /* ── KV table ── */
   table.kv { width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; }
@@ -250,19 +254,19 @@ export function generateSurveyHtml(data: SurveyData): string {
 <body>
 
 <div class="cover">
-  <h1>Electrical Survey Report</h1>
-  <p class="sub">电气勘测信息表</p>
+  <h1>Electrical Survey Report<span class="zh-inline" style="color:rgba(255,255,255,0.75)">电气勘测报告</span></h1>
+  <p class="sub">Elevator Modernization · 电梯改造</p>
   <div class="meta">
     <div class="meta-item">
-      <div class="label">Project</div>
+      <div class="label">Project · 项目</div>
       <div class="value">${esc(data.projectName || "Untitled")}</div>
     </div>
     <div class="meta-item">
-      <div class="label">Generated</div>
+      <div class="label">Generated · 生成日期</div>
       <div class="value">${esc(date)}</div>
     </div>
     <div class="meta-item">
-      <div class="label">Photos uploaded</div>
+      <div class="label">Photos uploaded · 已上传照片</div>
       <div class="value">${Object.values(data.photos).filter(p => p.images.length > 0).length} / 12 items</div>
     </div>
   </div>
@@ -273,37 +277,37 @@ export function generateSurveyHtml(data: SurveyData): string {
   <!-- Section 1: Project Info -->
   <div class="section-head">
     <div class="section-num">1</div>
-    <h2>Project Information</h2>
+    <h2>Project Information<span class="zh-inline">项目信息</span></h2>
   </div>
   <table class="kv">
-    ${kv("Project Name", data.projectName)}
-    ${kv("Site Address", data.siteAddress)}
+    ${kv("Project Name", "项目名称", data.projectName)}
+    ${kv("Site Address", "项目地址", data.siteAddress)}
     ${data.lat && data.lng
-      ? `<tr><th>GPS</th><td><a href="https://www.google.com/maps?q=${esc(data.lat)},${esc(data.lng)}" target="_blank" style="color:#2563eb">${esc(data.lat)}, ${esc(data.lng)}</a></td></tr>`
+      ? `<tr><th>GPS<span class="zh">经纬度</span></th><td><a href="https://www.google.com/maps?q=${esc(data.lat)},${esc(data.lng)}" target="_blank" style="color:#2563eb">${esc(data.lat)}, ${esc(data.lng)}</a></td></tr>`
       : ""}
-    ${kv("Existing Brand", data.brand === "Other" ? data.brandOther : data.brand)}
-    ${kv("Year Installed", data.yearInstalled)}
-    ${kv("Power Supply", data.powerSupply)}
-    ${kv("Survey Date", date)}
+    ${kv("Existing Brand", "原电梯品牌", data.brand === "Other" ? data.brandOther : data.brand)}
+    ${kv("Year Installed", "投运年份", data.yearInstalled)}
+    ${kv("Power Supply", "电源", data.powerSupply)}
+    ${kv("Survey Date", "勘测日期", date)}
   </table>
   <table class="kv" style="margin-top:8px">
     <thead>
       <tr style="background:#eff6ff">
-        <th style="color:#2563eb">Mounting Box (mm)</th>
+        <th style="color:#2563eb">Mounting Box (mm)<span class="zh" style="color:#60a5fa">安装盒尺寸</span></th>
         <th style="color:#2563eb;font-weight:700;text-align:center">COP</th>
         <th style="color:#2563eb;font-weight:700;text-align:center">HOP / LOP</th>
-        <th style="color:#2563eb;font-weight:700;text-align:center">Fireman Box</th>
+        <th style="color:#2563eb;font-weight:700;text-align:center">Fireman Box<span class="zh" style="color:#60a5fa">消防盒</span></th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <th>Length</th>
+        <th>Length<span class="zh">长</span></th>
         <td style="text-align:center">${esc(data.copLength || "—")}</td>
         <td style="text-align:center">${esc(data.hopLength || "—")}</td>
         <td style="text-align:center">${esc(data.fireboxLength || "—")}</td>
       </tr>
       <tr style="background:#f8fafc">
-        <th>Width</th>
+        <th>Width<span class="zh">宽</span></th>
         <td style="text-align:center">${esc(data.copWidth || "—")}</td>
         <td style="text-align:center">${esc(data.hopWidth || "—")}</td>
         <td style="text-align:center">${esc(data.fireboxWidth || "—")}</td>
@@ -315,14 +319,14 @@ export function generateSurveyHtml(data: SurveyData): string {
   <!-- Section 2: Shaft & Floor -->
   <div class="section-head">
     <div class="section-num">2</div>
-    <h2>Shaft &amp; Floor Configuration</h2>
+    <h2>Shaft &amp; Floor Configuration<span class="zh-inline">井道与楼层配置</span></h2>
   </div>
   <table class="kv" style="margin-bottom:16px">
-    ${kv("Door Entrances", data.entrances === "1" ? "Single" : "Double")}
-    ${kv("Pit Depth", data.pit ? data.pit + " m" : "")}
-    ${kv("Overhead (OH)", data.oh ? data.oh + " m" : "")}
-    ${kv("Shaft Total Height", data.shaftHeight ? data.shaftHeight + " m" : "")}
-    ${kv("Rising", data.rising ? data.rising + " m" : "")}
+    ${kv("Door Entrances", "开门方向", data.entrances === "1" ? "Single · 单开" : "Double · 双开")}
+    ${kv("Pit Depth", "底坑深度", data.pit ? data.pit + " m" : "")}
+    ${kv("Overhead (OH)", "顶层高度", data.oh ? data.oh + " m" : "")}
+    ${kv("Shaft Total Height", "井道总高", data.shaftHeight ? data.shaftHeight + " m" : "")}
+    ${kv("Rising", "提升高度", data.rising ? data.rising + " m" : "")}
   </table>
   <table class="floors">
     <thead>${floorHeader}</thead>
@@ -332,20 +336,20 @@ export function generateSurveyHtml(data: SurveyData): string {
   <!-- Section 3: Photos -->
   <div class="section-head">
     <div class="section-num">3</div>
-    <h2>On-Site Photos</h2>
+    <h2>On-Site Photos<span class="zh-inline">现场照片</span></h2>
   </div>
   ${photoSections}
 
   <!-- Other Notes -->
   <div class="section-head">
     <div class="section-num" style="background:#475569">✎</div>
-    <h2>Other Notes</h2>
+    <h2>Other Notes<span class="zh-inline">其他备注</span></h2>
   </div>
   <div class="photo-item">
     <div style="padding:16px">
       ${data.otherNote
         ? `<p style="font-size:14px;color:#1e293b;white-space:pre-wrap;line-height:1.7">${esc(data.otherNote)}</p>`
-        : `<p class="empty">No additional notes.</p>`}
+        : `<p class="empty">No additional notes · 无其他备注</p>`}
       ${data.otherImages.length > 0 ? `
       <div class="thumbs" style="margin-top:16px">
         ${data.otherImages.map((img, i) => `
