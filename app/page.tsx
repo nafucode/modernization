@@ -185,18 +185,18 @@ function Field({
   placeholder?: string; type?: string; unit?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 min-w-0">
       <label className="text-sm font-semibold text-slate-700">
         {label}
         {hint && <span className="ml-1.5 text-xs font-normal text-slate-400">{hint}</span>}
       </label>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0">
         <input
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 h-11 px-3 rounded-xl border border-slate-200 bg-white text-slate-800 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="flex-1 min-w-0 w-full h-11 px-3 rounded-xl border border-slate-200 bg-white text-slate-800 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         {unit && <span className="text-sm text-slate-400 shrink-0 w-6">{unit}</span>}
       </div>
@@ -851,9 +851,9 @@ export default function SurveyPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Year Installed" value={form.yearInstalled} onChange={(v) => set("yearInstalled", v)} placeholder="e.g. 2008" type="number" />
-              <Field label="Power Supply" value={form.powerSupply} onChange={(v) => set("powerSupply", v)} placeholder="380V 3-phase 50Hz" />
+              <Field label="Power Supply" value={form.powerSupply} onChange={(v) => set("powerSupply", v)} placeholder="380V 3ph 50Hz" />
             </div>
 
             {/* Mounting box dimensions — 3-component grid */}
